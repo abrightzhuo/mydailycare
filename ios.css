@@ -87,6 +87,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   top: 0; left: 0; right: 0;
   z-index: 100;
   padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px 10px;
+  background: rgba(242, 242, 247, .88); /* fallback */
   background: color-mix(in srgb, var(--bg) 75%, transparent);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
@@ -385,6 +386,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   z-index: 100;
   display: flex;
   padding: 6px 10px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  background: rgba(242, 242, 247, .85); /* fallback */
   background: color-mix(in srgb, var(--bg) 72%, transparent);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
@@ -597,6 +599,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   position: relative;
   z-index: 310;
   width: min(300px, 82vw);
+  background: rgba(255, 255, 255, .95); /* fallback */
   background: color-mix(in srgb, var(--card) 92%, transparent);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);

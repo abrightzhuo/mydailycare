@@ -43,7 +43,7 @@ const RIDE_PROVIDERS = [
 const $ = (id) => document.getElementById(id);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const pad = (n) => String(n).padStart(2, '0');
-const esc = (s) => (s ?? '').toString().replace(/[&<>"']/g, c =>
+const esc = (s) => (s === null || s === undefined ? '' : String(s)).replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -59,19 +59,23 @@ function minutesUntil(hhmm) {
 }
 
 // ---- State (shared with desktop guest data) ----
+function cloneDefault() {
+  // JSON round-trip instead of structuredClone for older-browser compatibility
+  return JSON.parse(JSON.stringify(defaultState));
+}
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return Object.assign(structuredClone(defaultState), parsed);
+      return Object.assign(cloneDefault(), parsed);
     }
   } catch {}
   try {
     const v3 = JSON.parse(localStorage.getItem('mydailycare.state.v3') || 'null');
-    if (v3) return Object.assign(structuredClone(defaultState), v3);
+    if (v3) return Object.assign(cloneDefault(), v3);
   } catch {}
-  return structuredClone(defaultState);
+  return cloneDefault();
 }
 let state = loadState();
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -629,10 +633,10 @@ function bind() {
   // Booking
   $('bookLaunchBtn').addEventListener('click', launchBooking);
   $('bookWebBtn').addEventListener('click', () => {
-    if (bookingProv?.web) window.open(bookingProv.web, '_blank');
+    if (bookingProv && bookingProv.web) window.open(bookingProv.web, '_blank');
   });
   $('bookCallBtn').addEventListener('click', () => {
-    if (bookingProv?.phone) window.location.href = 'tel:' + bookingProv.phone;
+    if (bookingProv && bookingProv.phone) window.location.href = 'tel:' + bookingProv.phone;
   });
 
   // Profile sheet

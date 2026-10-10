@@ -381,6 +381,15 @@
   </div>
 </div>
 
+<script>
+// Show any JS error visibly for easy diagnosis on old browsers
+window.addEventListener('error', function(e) {
+  var d = document.createElement('div');
+  d.textContent = 'JS Error: ' + (e.message || 'unknown');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#FF3B30;color:#fff;padding:10px;font-size:13px;font-family:sans-serif;';
+  document.body.appendChild(d);
+});
+</script>
 <script src="ios.js"></script>
 </body>
 </html>
