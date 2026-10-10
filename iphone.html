@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="MyDailyCare" />
+<meta name="theme-color" content="#F2F2F7" />
+<title>MyDailyCare — iPhone Edition</title>
+<link rel="stylesheet" href="ios.css" />
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ============ TODAY ============ -->
+  <section class="page active" id="page-today">
+    <header class="nav">
+      <h1 class="large-title">Today</h1>
+    </header>
+    <div class="content">
+      <div class="hero" id="hero">
+        <div class="hero-top">
+          <span class="hero-greeting" id="greeting">Good morning</span>
+          <span class="hero-date" id="heroDate"></span>
+        </div>
+        <div class="hero-next" id="heroNext">
+          <span class="hero-next-label">NEXT UP</span>
+          <span class="hero-next-icon" id="heroIcon">💊</span>
+          <span class="hero-next-name" id="heroName">—</span>
+          <span class="hero-next-time" id="heroTime">--:--</span>
+          <span class="hero-next-sub" id="heroSub"></span>
+        </div>
+      </div>
+
+      <div class="section-header">Timeline</div>
+      <div class="card list" id="todayList"></div>
+
+      <div class="section-header">Quick Actions</div>
+      <div class="quick-grid">
+        <button class="quick-btn" id="quickCath">
+          <span class="quick-icon">💧</span>
+          <span class="quick-name">Catheter</span>
+          <span class="quick-sub">4-hour timer</span>
+        </button>
+        <button class="quick-btn" id="quickTimer">
+          <span class="quick-icon">⏲️</span>
+          <span class="quick-name">Timer</span>
+          <span class="quick-sub">Custom</span>
+        </button>
+        <button class="quick-btn" data-goto="rides">
+          <span class="quick-icon">🚐</span>
+          <span class="quick-name">Ride</span>
+          <span class="quick-sub">Accessible</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CARE ============ -->
+  <section class="page" id="page-care">
+    <header class="nav">
+      <h1 class="large-title">Care</h1>
+      <div class="nav-actions">
+        <button class="nav-btn" id="addMedBtn" aria-label="Add medication">＋</button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="segmented" id="careSegment">
+        <button class="seg active" data-seg="meds">Medications</button>
+        <button class="seg" data-seg="tasks">Care Tasks</button>
+      </div>
+
+      <div id="segPaneMeds">
+        <div class="card list" id="medList"></div>
+      </div>
+
+      <div id="segPaneTasks" hidden>
+        <div class="card list" id="careList"></div>
+        <button class="btn tinted wide" id="addCareBtn">＋ Add Care Task</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RIDES ============ -->
+  <section class="page" id="page-rides">
+    <header class="nav">
+      <h1 class="large-title">Rides</h1>
+    </header>
+    <div class="content">
+      <div class="hero hero-gold mini">
+        <div class="hero-top">
+          <span class="hero-greeting">Accessible rides</span>
+          <span class="hero-date" id="locBadge">📍 United States</span>
+        </div>
+        <span class="hero-mini-sub">Every wheelchair-friendly option, one tap away</span>
+      </div>
+
+      <button class="cell profile-cell" id="profileCard">
+        <span class="cell-icon">♿</span>
+        <div class="cell-main">
+          <span class="cell-title" id="profTitle">Accessibility Profile</span>
+          <span class="cell-sub" id="profSub">Tap to set your needs — auto-filled with every booking</span>
+        </div>
+        <span class="cell-chevron">›</span>
+      </button>
+
+      <div class="chips" role="group" aria-label="Filter">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="wav">WAV</button>
+        <button class="chip" data-filter="driver-assist">Assist</button>
+        <button class="chip" data-filter="phone">Phone</button>
+        <button class="chip" data-filter="public">Public</button>
+      </div>
+
+      <div class="card list" id="providerList"></div>
+
+      <div class="section-header">Recent Trips</div>
+      <div class="card list" id="tripList"></div>
+    </div>
+  </section>
+
+  <!-- ============ ME ============ -->
+  <section class="page" id="page-me">
+    <header class="nav">
+      <h1 class="large-title">Me</h1>
+    </header>
+    <div class="content">
+      <div class="avatar-hero">
+        <span class="avatar">🌞</span>
+        <span class="avatar-name">Nico</span>
+        <span class="avatar-sub">MyDailyCare · iPhone Edition</span>
+      </div>
+
+      <div class="section-header">Health</div>
+      <div class="card list">
+        <button class="cell" id="meProfile">
+          <span class="cell-icon">♿</span>
+          <div class="cell-main">
+            <span class="cell-title">Accessibility Profile</span>
+            <span class="cell-sub" id="meProfSub">Wheelchair & ride needs</span>
+          </div>
+          <span class="cell-chevron">›</span>
+        </button>
+        <button class="cell" data-goto="rides">
+          <span class="cell-icon">🚐</span>
+          <div class="cell-main">
+            <span class="cell-title">My Trips</span>
+            <span class="cell-sub" id="meTripSub">0 recent</span>
+          </div>
+          <span class="cell-chevron">›</span>
+        </button>
+      </div>
+
+      <div class="section-header">Community</div>
+      <div class="card list">
+        <a class="cell" href="https://themighty.com" target="_blank" rel="noopener">
+          <span class="cell-icon">💪</span>
+          <div class="cell-main">
+            <span class="cell-title">The Mighty</span>
+            <span class="cell-sub">2M+ members · stories & groups</span>
+          </div>
+          <span class="cell-chevron">↗</span>
+        </a>
+        <a class="cell" href="https://www.reddit.com/r/wheelchairs/" target="_blank" rel="noopener">
+          <span class="cell-icon">🛞</span>
+          <div class="cell-main">
+            <span class="cell-title">r/wheelchairs</span>
+            <span class="cell-sub">15K+ wheelchair users</span>
+          </div>
+          <span class="cell-chevron">↗</span>
+        </a>
+        <a class="cell" href="https://moveunitedsport.org/chapters/" target="_blank" rel="noopener">
+          <span class="cell-icon">🏅</span>
+          <div class="cell-main">
+            <span class="cell-title">Adaptive Sports Near Me</span>
+            <span class="cell-sub">Move United chapters</span>
+          </div>
+          <span class="cell-chevron">↗</span>
+        </a>
+      </div>
+
+      <div class="section-header">About</div>
+      <div class="card list">
+        <div class="cell static">
+          <div class="cell-main">
+            <span class="cell-title">Version</span>
+          </div>
+          <span class="cell-value">1.0 · iPhone</span>
+        </div>
+        <div class="cell static">
+          <div class="cell-main">
+            <span class="cell-title">Storage</span>
+          </div>
+          <span class="cell-value">This device only</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB BAR ============ -->
+  <nav class="tabbar" role="tablist">
+    <button class="tab active" data-tab="today" role="tab" aria-selected="true">
+      <span class="tab-icon">☀️</span><span class="tab-label">Today</span>
+    </button>
+    <button class="tab" data-tab="care" role="tab" aria-selected="false">
+      <span class="tab-icon">💊</span><span class="tab-label">Care</span>
+    </button>
+    <button class="tab" data-tab="rides" role="tab" aria-selected="false">
+      <span class="tab-icon">🚐</span><span class="tab-label">Rides</span>
+    </button>
+    <button class="tab" data-tab="me" role="tab" aria-selected="false">
+      <span class="tab-icon">👤</span><span class="tab-label">Me</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ============ TIMER SHEET ============ -->
+<div class="sheet-backdrop" id="timerBackdrop" hidden></div>
+<div class="sheet timer-sheet" id="timerSheet" hidden>
+  <div class="sheet-grab"></div>
+  <h3 class="sheet-title" id="timerLabel">Timer</h3>
+  <div class="ring-wrap">
+    <svg viewBox="0 0 200 200" class="ring" aria-hidden="true">
+      <circle class="ring-track" cx="100" cy="100" r="88"/>
+      <circle class="ring-fill" id="ringFill" cx="100" cy="100" r="88"/>
+    </svg>
+    <div class="ring-center">
+      <span class="ring-time" id="ringTime">04:00</span>
+      <span class="ring-sub" id="ringSub">remaining</span>
+    </div>
+  </div>
+  <div class="preset-row">
+    <button class="pill" data-min="5">5m</button>
+    <button class="pill" data-min="10">10m</button>
+    <button class="pill" data-min="15">15m</button>
+    <button class="pill" data-min="30">30m</button>
+    <button class="pill" data-min="240">4h</button>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn filled wide" id="timerStartBtn">▶ Start</button>
+    <button class="btn tinted wide" id="timerStopBtn">Stop</button>
+  </div>
+</div>
+
+<!-- ============ MED SHEET ============ -->
+<div class="sheet-backdrop" id="medBackdrop" hidden></div>
+<div class="sheet" id="medSheet" hidden>
+  <div class="sheet-grab"></div>
+  <h3 class="sheet-title" id="medSheetTitle">Add Medication</h3>
+  <form id="medForm">
+    <input type="hidden" id="medId" />
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="medName" required placeholder="e.g. Heart Medication" />
+    </div>
+    <div class="field">
+      <label>Dosage</label>
+      <input type="text" id="medDosage" placeholder="e.g. 1 tablet" />
+    </div>
+    <div class="field">
+      <label>Time</label>
+      <input type="time" id="medTime" required value="08:00" />
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <input type="text" id="medNotes" placeholder="Optional" />
+    </div>
+    <div class="switch-row">
+      <span>Remind daily</span>
+      <label class="switch"><input type="checkbox" id="medEnabled" checked /><span></span></label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn tinted" data-close="medSheet">Cancel</button>
+      <button type="submit" class="btn filled">Save</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ CARE SHEET ============ -->
+<div class="sheet-backdrop" id="careBackdrop" hidden></div>
+<div class="sheet" id="careSheet" hidden>
+  <div class="sheet-grab"></div>
+  <h3 class="sheet-title" id="careSheetTitle">Add Care Task</h3>
+  <form id="careForm">
+    <input type="hidden" id="careId" />
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="careName" required placeholder="e.g. Catheterization" />
+    </div>
+    <div class="field">
+      <label>Every (hours)</label>
+      <input type="number" id="careInterval" min="1" max="48" required value="4" inputmode="numeric" />
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <input type="text" id="careNotes" placeholder="Optional" />
+    </div>
+    <div class="switch-row">
+      <span>Remind me</span>
+      <label class="switch"><input type="checkbox" id="careEnabled" checked /><span></span></label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn tinted" data-close="careSheet">Cancel</button>
+      <button type="submit" class="btn filled">Save</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ BOOKING SHEET ============ -->
+<div class="sheet-backdrop" id="bookBackdrop" hidden></div>
+<div class="sheet" id="bookSheet" hidden>
+  <div class="sheet-grab"></div>
+  <div class="book-head">
+    <span class="book-emoji" id="bookIcon">🚐</span>
+    <div>
+      <h3 class="sheet-title" id="bookTitle">Book a ride</h3>
+      <p class="book-sub" id="bookSub"></p>
+    </div>
+  </div>
+  <div class="field">
+    <label>Pickup</label>
+    <input type="text" id="bookPickup" placeholder="Current location" />
+  </div>
+  <div class="field">
+    <label>Dropoff</label>
+    <input type="text" id="bookDropoff" placeholder="Where to?" />
+  </div>
+  <div class="field">
+    <label>Notes for driver</label>
+    <textarea id="bookNotes" rows="3" placeholder="Auto-filled from your profile"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn tinted" id="bookCallBtn" hidden>📞 Call</button>
+    <button class="btn tinted" id="bookWebBtn" hidden>🌐 Website</button>
+    <button class="btn filled wide" id="bookLaunchBtn">▶ Launch</button>
+  </div>
+</div>
+
+<!-- ============ PROFILE SHEET ============ -->
+<div class="sheet-backdrop" id="profBackdrop" hidden></div>
+<div class="sheet" id="profSheet" hidden>
+  <div class="sheet-grab"></div>
+  <h3 class="sheet-title">Accessibility Profile</h3>
+  <form id="profForm">
+    <div class="field">
+      <label>Wheelchair type</label>
+      <select id="profChair">
+        <option value="power">Power wheelchair</option>
+        <option value="manual">Manual wheelchair</option>
+        <option value="foldable">Foldable / collapsible</option>
+        <option value="none">I don't use a wheelchair</option>
+      </select>
+    </div>
+    <div class="switch-row"><span>Need a WAV</span><label class="switch"><input type="checkbox" id="profWAV" checked /><span></span></label></div>
+    <div class="switch-row"><span>Need a ramp</span><label class="switch"><input type="checkbox" id="profRamp" /><span></span></label></div>
+    <div class="switch-row"><span>Need a lift</span><label class="switch"><input type="checkbox" id="profLift" /><span></span></label></div>
+    <div class="switch-row"><span>Driver assistance</span><label class="switch"><input type="checkbox" id="profAssist" /><span></span></label></div>
+    <div class="switch-row"><span>Service animal</span><label class="switch"><input type="checkbox" id="profAnimal" /><span></span></label></div>
+    <div class="field">
+      <label>Pickup notes</label>
+      <textarea id="profNotes" rows="2" placeholder="e.g. Front entrance, ramp on the right"></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn tinted" data-close="profSheet">Cancel</button>
+      <button type="submit" class="btn filled">Save</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ iOS ALERT ============ -->
+<div class="alert-backdrop" id="alertBackdrop" hidden></div>
+<div class="ios-alert" id="iosAlert" role="alertdialog" hidden>
+  <div class="alert-icon" id="alertIcon">⏰</div>
+  <h3 id="alertTitle">Reminder</h3>
+  <p id="alertMsg"></p>
+  <div class="alert-buttons">
+    <button class="alert-btn" id="alertSnooze">Snooze 5m</button>
+    <button class="alert-btn bold" id="alertOk">OK</button>
+  </div>
+</div>
+
+<script src="ios.js"></script>
+</body>
+</html>

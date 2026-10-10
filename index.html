@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#E5B800" />
+  <title>MyDailyCare · Daily Care & Medication Companion</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%BA%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Auth gate -->
+  <div class="auth-gate" id="authGate" hidden>
+    <div class="auth-box">
+      <span class="auth-logo" aria-hidden="true">🌞</span>
+      <h2>MyDailyCare</h2>
+      <p class="auth-tagline">Daily care, rides & community — made for you.</p>
+
+      <form id="authForm">
+        <label>Username
+          <input type="text" id="authUser" autocomplete="username" placeholder="e.g. nico" required />
+        </label>
+        <label>Password
+          <input type="password" id="authPass" autocomplete="current-password" placeholder="••••••" required />
+        </label>
+        <p id="authError" class="auth-error" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary btn-large btn-block" id="authSubmitBtn">Sign in</button>
+      </form>
+
+      <div class="auth-switch">
+        <button class="auth-link" id="authModeBtn">Create an account</button>
+        <button class="auth-link" id="authGuestBtn">Continue as guest</button>
+      </div>
+      <p class="auth-note">Accounts are stored only on this device.</p>
+    </div>
+  </div>
+
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header class="app-header" role="banner">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">🌞</span>
+      <div>
+        <h1>MyDailyCare</h1>
+        <p class="subtitle">Daily Care & Medication Companion</p>
+      </div>
+    </div>
+    <div class="header-status" aria-live="polite">
+      <span id="nowTime" class="now-time">--:--</span>
+      <span id="nowDate" class="now-date"></span>
+      <button class="btn btn-secondary btn-small" id="logoutBtn" hidden>👋 Sign out</button>
+    </div>
+  </header>
+
+  <main id="main" class="app-main" role="main">
+    <!-- Tabs -->
+    <nav class="tab-bar" role="tablist" aria-label="Sections">
+      <button class="tab active" role="tab" aria-selected="true" data-tab="home">Home</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="calendar">Calendar</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="meds">Meds</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="care">Care</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="timer">Timer</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="rides">Rides</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="community">Community</button>
+    </nav>
+
+    <!-- Home Dashboard -->
+    <section class="tab-panel active" id="tab-home" role="tabpanel" aria-label="Home">
+      <div class="card-grid">
+        <button class="big-card card-meds" data-goto="meds">
+          <span class="big-card-icon" aria-hidden="true">💊</span>
+          <span class="big-card-title">Medications</span>
+          <span class="big-card-meta" id="nextMedName">Next: none</span>
+          <span class="big-card-time" id="nextMedTime">--:--</span>
+        </button>
+
+        <button class="big-card card-care" data-goto="care">
+          <span class="big-card-icon" aria-hidden="true">🩺</span>
+          <span class="big-card-title">Care Tasks</span>
+          <span class="big-card-meta" id="nextCareName">Next due: none</span>
+          <span class="big-card-time" id="nextCareTime">--:--</span>
+        </button>
+
+        <button class="big-card card-calendar" data-goto="calendar">
+          <span class="big-card-icon" aria-hidden="true">📅</span>
+          <span class="big-card-title">Calendar</span>
+          <span class="big-card-meta" id="weekCountMeta">7-day view</span>
+          <span class="big-card-time" id="weekTodayCount">--</span>
+        </button>
+
+        <button class="big-card card-timer" data-goto="timer">
+          <span class="big-card-icon" aria-hidden="true">⏲️</span>
+          <span class="big-card-title">Quick Timer</span>
+          <span class="big-card-meta">Start a countdown</span>
+          <span class="big-card-time">▶ Start</span>
+        </button>
+
+        <button class="big-card card-quick-cath" id="quickCathBtn">
+          <span class="big-card-icon" aria-hidden="true">💧</span>
+          <span class="big-card-title">Catheter Timer</span>
+          <span class="big-card-meta">Reminder every 4 hours</span>
+          <span class="big-card-time">▶ Launch</span>
+        </button>
+
+        <button class="big-card card-community" data-goto="community">
+          <span class="big-card-icon" aria-hidden="true">🤝</span>
+          <span class="big-card-title">Community</span>
+          <span class="big-card-meta" id="savedCommunitiesCount">Saved resources</span>
+          <span class="big-card-time" id="matchCount">Explore</span>
+        </button>
+      </div>
+
+      <h2 class="section-title">Today's Schedule</h2>
+      <ul class="today-list" id="todayList" aria-live="polite"></ul>
+    </section>
+
+    <!-- Calendar -->
+    <section class="tab-panel" id="tab-calendar" role="tabpanel" aria-label="Calendar">
+      <div class="panel-header">
+        <h2>📅 7-Day Calendar</h2>
+        <div class="cal-nav">
+          <button class="btn btn-secondary btn-small" id="prevWeekBtn" aria-label="Previous week">‹</button>
+          <span id="calRange" class="cal-range">—</span>
+          <button class="btn btn-secondary btn-small" id="nextWeekBtn" aria-label="Next week">›</button>
+        </div>
+      </div>
+
+      <p class="hint">Tap any day to see its full schedule. Medication times are fixed daily. Care tasks recur at their interval starting from the last completion.</p>
+      <div id="dayCards" class="day-cards" role="list"></div>
+    </section>
+
+    <!-- Medications -->
+    <section class="tab-panel" id="tab-meds" role="tabpanel" aria-label="Medications">
+      <div class="panel-header">
+        <h2>💊 Medications & Reminders</h2>
+        <button class="btn btn-primary" id="addMedBtn">+ Add Medication</button>
+      </div>
+
+      <p class="hint">Set a time (24h format, e.g. 08:00). You'll get an alarm, sound and system notification at that time every day.</p>
+      <ul class="item-list" id="medList"></ul>
+    </section>
+
+    <!-- Care Tasks -->
+    <section class="tab-panel" id="tab-care" role="tabpanel" aria-label="Care Tasks">
+      <div class="panel-header">
+        <h2>🩺 Care Tasks (e.g. catheterization)</h2>
+        <button class="btn btn-primary" id="addCareBtn">+ Add Task</button>
+      </div>
+
+      <p class="hint">Set the interval in hours. You'll be reminded when it's due. Tap "Done" to reset the timer.</p>
+      <ul class="item-list" id="careList"></ul>
+    </section>
+
+    <!-- Timer -->
+    <section class="tab-panel" id="tab-timer" role="tabpanel" aria-label="Timer">
+      <div class="timer-display" id="timerDisplay" aria-live="polite">00:00</div>
+
+      <div class="timer-presets">
+        <button class="btn btn-secondary preset-btn" data-min="5">5 min</button>
+        <button class="btn btn-secondary preset-btn" data-min="10">10 min</button>
+        <button class="btn btn-secondary preset-btn" data-min="15">15 min</button>
+        <button class="btn btn-secondary preset-btn" data-min="30">30 min</button>
+        <button class="btn btn-secondary preset-btn" data-min="60">60 min</button>
+        <button class="btn btn-secondary preset-btn" data-min="240">4 hours</button>
+      </div>
+
+      <div class="custom-timer">
+        <label for="customMin">Custom (minutes)</label>
+        <input type="number" id="customMin" min="1" max="999" value="20" inputmode="numeric" />
+      </div>
+
+      <div class="timer-controls">
+        <button class="btn btn-primary btn-large" id="startTimerBtn">▶ Start</button>
+        <button class="btn btn-danger btn-large" id="stopTimerBtn" disabled>■ Stop</button>
+      </div>
+
+      <div class="alarm-log">
+        <h3>Recent Alarms</h3>
+        <ul id="alarmLog"></ul>
+      </div>
+    </section>
+
+    <!-- Rides -->
+    <section class="tab-panel" id="tab-rides" role="tabpanel" aria-label="Rides & Transportation">
+      <div class="panel-header">
+        <h2>🚐 Accessible Rides</h2>
+        <div class="cal-nav">
+          <span class="loc-badge" id="locBadge" title="Your approximate location">📍 Locating…</span>
+        </div>
+      </div>
+
+      <p class="hint">All wheelchair-accessible transportation options in the U.S. in one place. Tap a provider for WAV availability, cost, and a one-tap launch.</p>
+
+      <!-- Filter chips -->
+      <div class="filter-bar" role="group" aria-label="Filter ride providers">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="wav">WAV 🚐</button>
+        <button class="chip" data-filter="driver-assist">Driver Assist 🤝</button>
+        <button class="chip" data-filter="standard">Standard 🚗</button>
+        <button class="chip" data-filter="phone">Phone ☎️</button>
+        <button class="chip" data-filter="public">Public 🚌</button>
+      </div>
+
+      <h3 class="section-title">Your Accessibility Profile</h3>
+      <button class="profile-card" id="profileCard">
+        <div class="profile-summary">
+          <div class="profile-main">
+            <span class="profile-icon" aria-hidden="true">♿</span>
+            <span>
+              <strong id="profTitle">Tap to set up</strong>
+              <small id="profSub">We'll include this with every booking</small>
+            </span>
+          </div>
+          <span class="profile-edit">Edit ›</span>
+        </div>
+      </button>
+
+      <h3 class="section-title">Saved Destinations</h3>
+      <div class="destinations" id="destList"></div>
+      <button class="btn btn-secondary btn-block" id="addDestBtn">+ Add Destination</button>
+
+      <h3 class="section-title">Available Providers</h3>
+      <div id="providerGrid" class="provider-grid"></div>
+
+      <h3 class="section-title">Recent Trips</h3>
+      <ul class="trip-list" id="tripList"></ul>
+    </section>
+
+    <!-- Community -->
+    <section class="tab-panel" id="tab-community" role="tabpanel" aria-label="Community">
+      <div class="panel-header">
+        <h2>🤝 Disability Community</h2>
+      </div>
+
+      <p class="hint">Connect with other disabled adults across the U.S. The list below links to vetted online communities and support groups. Save what works for you, and use the Notes section to record accessibility tips you can share or refer back to.</p>
+
+      <!-- Profile card -->
+      <button class="profile-card" id="interestsCard">
+        <div class="profile-summary">
+          <div class="profile-main">
+            <span class="profile-icon" aria-hidden="true">🏷️</span>
+            <span>
+              <strong id="interestsTitle">Tell us about you</strong>
+              <small id="interestsSub">We'll match resources that fit you best</small>
+            </span>
+          </div>
+          <span class="profile-edit">Edit ›</span>
+        </div>
+      </button>
+
+      <!-- Connect Locally -->
+      <h3 class="section-title">Connect Locally 🇺🇸</h3>
+      <p class="hint" style="margin-top:0;">Set your city once — we'll build one-tap searches for local disability groups, events and adaptive sports near you.</p>
+      <div class="city-row">
+        <input type="text" id="cityInput" placeholder="Your city & state — e.g. Austin, TX" aria-label="Your city and state" />
+        <button class="btn btn-primary" id="saveCityBtn">Save</button>
+      </div>
+      <div id="localSearchGrid" class="launcher-grid"></div>
+
+      <h3 class="section-title">Find Local Chapters</h3>
+      <p class="hint" style="margin-top:0;">National organizations with in-person chapters and programs in most U.S. cities.</p>
+      <div id="chapterGrid" class="launcher-grid"></div>
+
+      <h3 class="section-title">My Connect Card</h3>
+      <p class="hint" style="margin-top:0;">A short intro about you — tap "Copy" and paste it into a group post, an email, or show it to someone new.</p>
+      <div class="connect-card">
+        <textarea id="connectCardText" rows="5" aria-label="Your connect card text"></textarea>
+        <div class="connect-actions">
+          <button class="btn btn-secondary" id="regenCardBtn">↻ Regenerate</button>
+          <button class="btn btn-primary" id="copyCardBtn">📋 Copy</button>
+        </div>
+      </div>
+
+      <h3 class="section-title">Browse Communities</h3>
+      <div class="filter-bar" role="group" aria-label="Filter communities">
+        <button class="chip active" data-comfilter="all">All</button>
+        <button class="chip" data-comfilter="general">General</button>
+        <button class="chip" data-comfilter="wheelchair">Wheelchair</button>
+        <button class="chip" data-comfilter="heart">Heart</button>
+        <button class="chip" data-comfilter="adhd">ADHD</button>
+        <button class="chip" data-comfilter="condition">Other conditions</button>
+        <button class="chip" data-comfilter="veterans">Veterans</button>
+      </div>
+      <div id="communityGrid" class="provider-grid"></div>
+
+      <h3 class="section-title">My Saved Resources <span id="savedCount" class="count-badge">0</span></h3>
+      <div id="savedGrid" class="provider-grid"></div>
+
+      <h3 class="section-title">My Accessibility Notes <span id="notesCount" class="count-badge">0</span></h3>
+      <p class="hint" style="margin-top:0;">Save accessibility tips, friendly venues, provider notes. Tap any note to copy it for sharing.</p>
+      <button class="btn btn-primary btn-block" id="addNoteBtn">+ Add Note</button>
+      <ul class="notes-list" id="notesList"></ul>
+    </section>
+  </main>
+
+  <!-- Medication modal -->
+  <div class="modal" id="medModal" role="dialog" aria-modal="true" aria-labelledby="medModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="medModalTitle">Add Medication</h3>
+      <form id="medForm">
+        <input type="hidden" id="medId" />
+        <label>Name
+          <input type="text" id="medName" required placeholder="e.g. Aspirin" />
+        </label>
+        <label>Dosage
+          <input type="text" id="medDosage" placeholder="e.g. 100mg / 1 tablet" />
+        </label>
+        <label>Time (HH:MM)
+          <input type="time" id="medTime" required />
+        </label>
+        <label class="checkbox-line">
+          <input type="checkbox" id="medEnabled" checked /> Enable reminder
+        </label>
+        <label>Notes
+          <textarea id="medNotes" rows="2" placeholder="optional"></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="medCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Care task modal -->
+  <div class="modal" id="careModal" role="dialog" aria-modal="true" aria-labelledby="careModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="careModalTitle">Add Care Task</h3>
+      <form id="careForm">
+        <input type="hidden" id="careId" />
+        <label>Task Name
+          <input type="text" id="careName" required placeholder="e.g. Catheterization" />
+        </label>
+        <label>Interval (hours)
+          <input type="number" id="careInterval" required min="1" max="24" value="4" />
+        </label>
+        <label class="checkbox-line">
+          <input type="checkbox" id="careEnabled" checked /> Enable reminder
+        </label>
+        <label>Notes
+          <textarea id="careNotes" rows="2" placeholder="optional"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="careCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Alarm modal -->
+  <div class="modal alarm-modal" id="alarmModal" role="alertdialog" aria-modal="true" aria-labelledby="alarmModalTitle" hidden>
+    <div class="modal-content">
+      <div class="alarm-icon" aria-hidden="true">⏰</div>
+      <h3 id="alarmModalTitle">Time's up!</h3>
+      <p id="alarmMessage" class="alarm-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="alarmSnoozeBtn">Snooze 5 min</button>
+        <button class="btn btn-primary" id="alarmAckBtn">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ride booking modal -->
+  <div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" hidden>
+    <div class="modal-content">
+      <div class="book-header">
+        <span class="book-icon" id="bookIcon" aria-hidden="true">🚐</span>
+        <div>
+          <h3 id="bookModalTitle">Book a ride</h3>
+          <p id="bookSubtitle" class="book-subtitle"></p>
+        </div>
+      </div>
+
+      <div class="book-row">
+        <label>Pickup
+          <select id="bookPickup"></select>
+        </label>
+      </div>
+      <div class="book-row">
+        <label>Dropoff
+          <select id="bookDropoff"></select>
+        </label>
+      </div>
+      <div class="book-row two-col">
+        <label>When
+          <select id="bookWhen">
+            <option value="now">Now</option>
+            <option value="15">In 15 min</option>
+            <option value="30">In 30 min</option>
+            <option value="60">In 1 hour</option>
+          </select>
+        </label>
+        <label>Riders
+          <select id="bookPax">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+      </div>
+      <div class="book-row">
+        <label>Notes for driver (auto-filled from your accessibility profile)
+          <textarea id="bookNotes" rows="3"></textarea>
+        </label>
+      </div>
+
+      <div class="book-cta">
+        <button class="btn btn-primary btn-large btn-block" id="bookLaunchBtn">▶ Launch Provider</button>
+        <div class="book-alt">
+          <button class="btn btn-secondary" id="bookWebBtn" hidden>Open Website</button>
+          <button class="btn btn-secondary" id="bookCallBtn" hidden>📞 Call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accessibility profile modal -->
+  <div class="modal" id="profModal" role="dialog" aria-modal="true" aria-labelledby="profModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="profModalTitle">Accessibility Profile</h3>
+      <p class="hint" style="margin-top:0;">Saved once and shared with every booking.</p>
+      <form id="profForm">
+        <label>Wheelchair type
+          <select id="profChair">
+            <option value="power">Power wheelchair</option>
+            <option value="manual">Manual wheelchair</option>
+            <option value="foldable">Foldable / collapsible</option>
+            <option value="none">I don't use a wheelchair</option>
+          </select>
+        </label>
+        <label class="checkbox-line"><input type="checkbox" id="profWAV" checked /> Need a WAV (Wheelchair-Accessible Vehicle)</label>
+        <label class="checkbox-line"><input type="checkbox" id="profRamp" /> Need a ramp</label>
+        <label class="checkbox-line"><input type="checkbox" id="profLift" /> Need a lift</label>
+        <label class="checkbox-line"><input type="checkbox" id="profAssist" /> Need driver assistance</label>
+        <label class="checkbox-line"><input type="checkbox" id="profAnimal" /> Traveling with a service animal</label>
+        <label>Pickup notes
+          <textarea id="profNotes" rows="2" placeholder="e.g. Front entrance, ramp on the right side"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="profCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Destination modal -->
+  <div class="modal" id="destModal" role="dialog" aria-modal="true" aria-labelledby="destModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="destModalTitle">Add Destination</h3>
+      <form id="destForm">
+        <input type="hidden" id="destId" />
+        <label>Label
+          <input type="text" id="destLabel" required placeholder="e.g. Home, Doctor, Pharmacy" />
+        </label>
+        <label>Address
+          <textarea id="destAddress" rows="2" required placeholder="Street, City, State ZIP"></textarea>
+        </label>
+        <label class="checkbox-line"><input type="checkbox" id="destDefault" /> Set as default pickup</label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="destCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Interests / about-you modal -->
+  <div class="modal" id="interestsModal" role="dialog" aria-modal="true" aria-labelledby="interestsModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="interestsModalTitle">About You</h3>
+      <p class="hint" style="margin-top:0;">Pick what fits. Used only on this device to highlight matching communities.</p>
+      <form id="interestsForm">
+        <label>I'm interested in (pick any)
+          <div class="interest-grid" id="interestGrid" role="group" aria-label="Interests"></div>
+        </label>
+        <label>Short bio (optional — kept on this device only)
+          <textarea id="commBio" rows="3" placeholder="e.g. Wheelchair user, heart patient, looking for peer support"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="interestsCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Accessibility note modal -->
+  <div class="modal" id="noteModal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle" hidden>
+    <div class="modal-content">
+      <h3 id="noteModalTitle">Add Note</h3>
+      <p class="hint" style="margin-top:0;">Save accessibility tips, friendly venues, provider notes. Local-only on this device.</p>
+      <form id="noteForm">
+        <input type="hidden" id="noteId" />
+        <label>Title
+          <input type="text" id="noteTitle" required placeholder="e.g. Best WAV pickup spot at Mercy Hospital" />
+        </label>
+        <label>Notes
+          <textarea id="noteBody" rows="4" required placeholder="Details, tips, location, etc."></textarea>
+        </label>
+        <label>Tags (optional, comma-separated)
+          <input type="text" id="noteTags" placeholder="e.g. venue, provider, paratransit" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="noteCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
