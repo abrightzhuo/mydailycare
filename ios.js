@@ -78,7 +78,12 @@ function loadState() {
   return cloneDefault();
 }
 let state = loadState();
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let storageOK = true;
+function save() {
+  // Guard against iOS Safari private mode / blocked cookies where setItem throws
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { storageOK = false; }
+}
 
 // ---- Tabs ----
 function switchTab(name) {
@@ -708,4 +713,13 @@ function renderMe() {
   $('meProfSub').textContent = p ? 'Profile set ✓' : 'Not set up yet';
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    init();
+  } catch (e) {
+    var d = document.createElement('div');
+    d.textContent = 'Startup Error: ' + (e && e.message ? e.message : String(e));
+    d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#FF3B30;color:#fff;padding:12px;font-size:13px;font-family:sans-serif;';
+    document.body.appendChild(d);
+  }
+});
