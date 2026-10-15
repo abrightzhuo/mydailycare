@@ -91,8 +91,8 @@ function fmtUSAMPM(d) {
   return d.toLocaleTimeString('en-US', { timeZone: tz(), hour: 'numeric', minute: '2-digit' });
 }
 function getUSHour(d) {
-  const parts = d.toLocaleString('en-US', { timeZone: tz(), hour: 'numeric', hour12: true });
-  return parseInt(parts, 10);
+  const parts = d.toLocaleString('en-US', { timeZone: tz(), hour: 'numeric', hour12: false });
+  return parseInt(parts, 10) % 24;
 }
 function greetingForHour(h) {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
