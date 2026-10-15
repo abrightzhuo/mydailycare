@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MyDailyCare" />
 <meta name="theme-color" content="#F2F2F7" />
 <title>MyDailyCare — iPhone Edition</title>
-<link rel="stylesheet" href="ios.css?v=6" />
+<link rel="stylesheet" href="ios.css?v=8" />
 </head>
 <body>
 
@@ -53,6 +53,26 @@
           <span class="quick-icon">🚐</span>
           <span class="quick-name">Ride</span>
           <span class="quick-sub">Accessible</span>
+        </button>
+      </div>
+
+      <div class="section-header">Connect</div>
+      <div class="connect-grid">
+        <button class="connect-card connect-companion" id="openCompanionBtn">
+          <span class="connect-emoji">☀️</span>
+          <div class="connect-text">
+            <strong>Sunny — Care Companion</strong>
+            <small>Chat about anything. Always here.</small>
+          </div>
+          <span class="cell-chevron">›</span>
+        </button>
+        <button class="connect-card connect-community" id="openCommunityBtn">
+          <span class="connect-emoji">💬</span>
+          <div class="connect-text">
+            <strong>Care Community</strong>
+            <small>Share & read notes from wheelchair users</small>
+          </div>
+          <span class="cell-chevron">›</span>
         </button>
       </div>
     </div>
@@ -203,11 +223,19 @@
 
       <div class="section-header">About</div>
       <div class="card list">
+        <div class="cell">
+          <span class="cell-icon">🕒</span>
+          <div class="cell-main">
+            <span class="cell-title">Time Zone</span>
+            <span class="cell-sub" id="tzLabel">Currently: Eastern (New York)</span>
+          </div>
+          <select id="tzSelect" style="background:var(--fill);border:none;border-radius:8px;padding:6px 8px;font-size:14px;color:var(--gold-text);font-weight:700;"></select>
+        </div>
         <div class="cell static">
           <div class="cell-main">
             <span class="cell-title">Version</span>
           </div>
-          <span class="cell-value">1.0 · iPhone</span>
+          <span class="cell-value">1.1 · iPhone</span>
         </div>
         <div class="cell static">
           <div class="cell-main">
@@ -451,6 +479,44 @@
   </form>
 </div>
 
+<!-- ============ COMPANION CHAT SHEET ============ -->
+<div class="sheet-backdrop" id="companionBackdrop" hidden></div>
+<div class="sheet chat-sheet" id="companionSheet" hidden>
+  <div class="sheet-grab"></div>
+  <div class="chat-header">
+    <span class="chat-avatar">☀️</span>
+    <div>
+      <div class="chat-name">Sunny</div>
+      <div class="chat-status">Care Companion · always here</div>
+    </div>
+    <button class="btn tinted" data-close="companionSheet" style="padding:6px 12px;font-size:14px;margin-left:auto;">Close</button>
+  </div>
+  <div class="chat-log" id="chatLog"></div>
+  <form class="chat-input-row" onsubmit="return false;">
+    <input type="text" id="chatInput" placeholder="Type a message…" autocomplete="off" />
+    <button type="button" class="chat-send" id="chatSendBtn" aria-label="Send">➤</button>
+  </form>
+</div>
+
+<!-- ============ COMMUNITY SHEET ============ -->
+<div class="sheet-backdrop" id="communityBackdrop" hidden></div>
+<div class="sheet comm-sheet" id="communitySheet" hidden>
+  <div class="sheet-grab"></div>
+  <div class="chat-header">
+    <span class="chat-avatar">💬</span>
+    <div>
+      <div class="chat-name">Care Community</div>
+      <div class="chat-status">Local notes from wheelchair users</div>
+    </div>
+    <button class="btn tinted" data-close="communitySheet" style="padding:6px 12px;font-size:14px;margin-left:auto;">Close</button>
+  </div>
+  <div class="comm-list" id="commList"></div>
+  <form class="post-input-row" onsubmit="return false;">
+    <textarea id="postInput" rows="2" placeholder="Share something with the community…"></textarea>
+    <button type="button" class="post-send" id="postPublishBtn" aria-label="Post">Post</button>
+  </form>
+</div>
+
 <!-- ============ iOS ALERT ============ -->
 <div class="alert-backdrop" id="alertBackdrop" hidden></div>
 <div class="ios-alert" id="iosAlert" role="alertdialog" hidden>
@@ -472,6 +538,6 @@ window.addEventListener('error', function(e) {
   document.body.appendChild(d);
 });
 </script>
-<script src="ios.js?v=7"></script>
+<script src="ios.js?v=8"></script>
 </body>
 </html>

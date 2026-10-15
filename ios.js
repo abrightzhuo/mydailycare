@@ -17,8 +17,18 @@ const defaultState = {
   trips: [],
   rideFilter: 'all',
   emergencyContact: null,        // { name, phone, relationship }
-  moodLog: {}                    // { 'YYYY-MM-DD': '😊' }
+  moodLog: {},                   // { 'YYYY-MM-DD': '😊' }
+  companionChat: [],             // [{ from: 'me'|'bot', text, at }]
+  communityPosts: [],            // [{ id, avatar, name, time, text, likes, liked, own }]
+  timezone: 'America/New_York'   // ET default
 };
+
+const DEFAULT_COMMUNITY = [
+  { id: 'c1', avatar: '🦋', name: 'Maria · Chicago',  time: '2h',  text: 'Just tried adaptive pottery today 🎨 Wheelchair-friendly studio downtown. Anyone want to swap spots next week?', likes: 12, liked: false, own: false },
+  { id: 'c2', avatar: '💪', name: 'Marcus · Atlanta', time: '5h',  text: 'Friendly reminder: do your pressure relief every 15 minutes. Your skin will thank you tomorrow! 💛', likes: 24, liked: false, own: false },
+  { id: 'c3', avatar: '🌸', name: 'Tasha · Phoenix',  time: '1d',  text: 'Came across MyDailyCare for medication reminders. The loud alarm actually gets me out of the chair now 🙌', likes: 8,  liked: false, own: false },
+  { id: 'c4', avatar: '🛞', name: 'Devon · Boston',   time: '2d',  text: 'Travel tip: call your paratransit 24h ahead — fills up fast, especially in winter. Save the number!', likes: 15, liked: false, own: false }
+];
 
 const RIDE_PROVIDERS = [
   { id: 'uber-wav', name: 'Uber WAV', icon: '🚐', category: 'wav', wait: '5–20 min', cost: '$$',
@@ -48,8 +58,8 @@ const pad = (n) => String(n).padStart(2, '0');
 const esc = (s) => (s === null || s === undefined ? '' : String(s)).replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const todayKey = () => new Date().toISOString().slice(0, 10);
-const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const todayKey = () => new Date().toLocaleDateString('en-CA', { timeZone: tz() });
+const nowHM = () => fmtUSClock(new Date());
 
 function minutesUntil(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
@@ -58,6 +68,34 @@ function minutesUntil(hhmm) {
   let diff = Math.round((t - d) / 60000);
   if (diff < -12 * 60) diff += 24 * 60;
   return diff;
+}
+
+// ---- US time zone helpers ----
+const TZ_OPTIONS = [
+  { value: 'America/New_York',    label: 'Eastern (New York)' },
+  { value: 'America/Chicago',     label: 'Central (Chicago)' },
+  { value: 'America/Denver',      label: 'Mountain (Denver)' },
+  { value: 'America/Phoenix',     label: 'Mountain — Arizona (Phoenix)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (Los Angeles)' },
+  { value: 'America/Anchorage',   label: 'Alaska (Anchorage)' },
+  { value: 'Pacific/Honolulu',    label: 'Hawaii (Honolulu)' }
+];
+function tz() { return state.timezone || 'America/New_York'; }
+function fmtUSDate(d) {
+  return d.toLocaleDateString('en-US', { timeZone: tz(), weekday: 'long', month: 'short', day: 'numeric' });
+}
+function fmtUSClock(d) {
+  return d.toLocaleTimeString('en-US', { timeZone: tz(), hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function fmtUSAMPM(d) {
+  return d.toLocaleTimeString('en-US', { timeZone: tz(), hour: 'numeric', minute: '2-digit' });
+}
+function getUSHour(d) {
+  const parts = d.toLocaleString('en-US', { timeZone: tz(), hour: 'numeric', hour12: true });
+  return parseInt(parts, 10);
+}
+function greetingForHour(h) {
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
 // ---- State (shared with desktop guest data) ----
@@ -103,28 +141,49 @@ function switchTab(name) {
 // ---- Clock / greeting ----
 function tickClock() {
   const d = new Date();
-  $('heroDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-  const h = d.getHours();
-  $('greeting').textContent = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  $('heroDate').textContent = fmtUSDate(d);
+  $('greeting').textContent = greetingForHour(getUSHour(d));
 }
 
 // ---- Today ----
 function nextEvent() {
   const meds = state.medications.filter(m => m.enabled).map(m => ({
-    icon: '💊', name: m.name + (m.dosage ? ' · ' + m.dosage : ''), time: m.time, min: minutesUntil(m.time), type: 'med'
+    icon: '💊', name: m.name + (m.dosage ? ' · ' + m.dosage : ''), time: m.time, min: minutesUntilUS(m.time), type: 'med'
   }));
   const cares = state.careTasks.filter(c => c.enabled).map(c => {
     const last = state.lastTriggered.care[c.id];
     const dueAt = last ? last + c.interval * 3600000 : Date.now();
     return {
-      icon: '🩺', name: c.name, time: formatTs(dueAt), min: Math.round((dueAt - Date.now()) / 60000), type: 'care'
+      icon: '🩺', name: c.name, time: formatTsUS(dueAt), min: Math.round((dueAt - Date.now()) / 60000), type: 'care'
     };
   });
   return meds.concat(cares).sort((a, b) => a.min - b.min);
 }
-function formatTs(ts) {
-  const d = new Date(ts);
-  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+function formatTsUS(ts) { return fmtUSClock(new Date(ts)); }
+
+// minutesUntilUS: minutes from "now" until next occurrence of hh:mm in US time zone
+function minutesUntilUS(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  // Find next occurrence of h:m in US time
+  const now = new Date();
+  // Get current US time as a Date that represents the next target
+  // We compute the target as the next time the US clock equals hhmm
+  const usNow = new Date(now.toLocaleString('en-US', { timeZone: tz() }));
+  // usNow components are in local interpretation; better: compute target UTC from US time
+  // Approach: find the YYYY-MM-DD HH:MM in US tz that is >= now in US tz
+  const usStr = now.toLocaleString('en-US', {
+    timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  });
+  // usStr like "10/15/2026, 14:30"
+  const m1 = usStr.match(/(\d{2})\/(\d{2})\/(\d{4}),\s*(\d{2}):(\d{2})/);
+  let usY = 2026, usMo = 1, usD = 1, usH = 0, usMi = 0;
+  if (m1) { usMo = +m1[1]; usD = +m1[2]; usY = +m1[3]; usH = +m1[4]; usMi = +m1[5]; }
+  const targetUSMin = h * 60 + m;
+  const currentUSMin = usH * 60 + usMi;
+  let diffMin = targetUSMin - currentUSMin;
+  if (diffMin < 0) diffMin += 24 * 60;
+  return diffMin;
 }
 
 function renderToday() {
@@ -431,8 +490,9 @@ function startTimer(sec, label) {
 // ---- Scheduler ----
 function checkSchedule() {
   const now = new Date();
-  const hhmm = pad(now.getHours()) + ':' + pad(now.getMinutes());
-  const tk = todayKey() + '|' + hhmm;
+  const hhmm = fmtUSClock(now);  // "08:00" in US timezone
+  const usDay = now.toLocaleDateString('en-CA', { timeZone: tz() }); // YYYY-MM-DD
+  const tk = usDay + '|' + hhmm;
 
   state.medications.forEach(m => {
     if (!m.enabled) return;
@@ -448,7 +508,7 @@ function checkSchedule() {
     if (!c.enabled || alertActive) return;
     const last = state.lastTriggered.care[c.id] || 0;
     if (Date.now() - last >= c.interval * 3600000) {
-      const dueKey = c.id + '|' + todayKey();
+      const dueKey = c.id + '|' + usDay;
       if (!state.lastTriggered.care[dueKey]) {
         showAlert('🩺', 'Care task due', `${c.name} (every ${c.interval} hours)`);
         state.lastTriggered.care[dueKey] = Date.now();
@@ -523,6 +583,9 @@ function seed() {
       { id: newId(), label: 'Home', address: '123 Main St', isDefault: true },
       { id: newId(), label: 'Doctor', address: 'City Medical Plaza', isDefault: false }
     ];
+  }
+  if (!state.communityPosts || !state.communityPosts.length) {
+    state.communityPosts = JSON.parse(JSON.stringify(DEFAULT_COMMUNITY));
   }
   save();
 }
@@ -737,6 +800,32 @@ function bind() {
 
   // Mood
   $$('.mood-btn').forEach(b => b.addEventListener('click', () => setMood(b.dataset.mood)));
+
+  // Companion chat
+  $('chatSendBtn').addEventListener('click', sendChat);
+  $('chatInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
+  });
+
+  // Community
+  $('commList').addEventListener('click', (e) => {
+    const like = e.target.closest('[data-like]');
+    if (like) toggleLike(like.dataset.like);
+  });
+  $('postPublishBtn').addEventListener('click', publishPost);
+
+  // Today page entry cards
+  $('openCompanionBtn').addEventListener('click', openCompanion);
+  $('openCommunityBtn').addEventListener('click', openCommunity);
+
+  // Timezone picker
+  $('tzSelect').addEventListener('change', (e) => {
+    state.timezone = e.target.value;
+    save();
+    tickClock();
+    renderToday();
+    renderMe();
+  });
 }
 
 // ---- Init ----
@@ -784,7 +873,7 @@ function renderMe() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const k = d.toISOString().slice(0, 10);
+    const k = d.toLocaleDateString('en-CA', { timeZone: tz() });
     days.push({ k, m: state.moodLog[k] });
   }
   days.forEach(({ k, m }) => {
@@ -794,6 +883,22 @@ function renderMe() {
     cell.innerHTML = `<span class="mood-day-emoji">${m || '·'}</span><span class="mood-day-label">${k.slice(5)}</span>`;
     hist.appendChild(cell);
   });
+
+  // Timezone select
+  const sel = $('tzSelect');
+  if (sel) {
+    if (!sel.options.length) {
+      TZ_OPTIONS.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        sel.appendChild(opt);
+      });
+    }
+    sel.value = tz();
+  }
+  const tzLabel = $('tzLabel');
+  if (tzLabel) tzLabel.textContent = 'Currently: ' + (TZ_OPTIONS.find(o => o.value === tz())?.label || tz());
 }
 
 // ---- SOS ----
@@ -856,6 +961,176 @@ function setMood(emoji) {
   if (!state.moodLog[today]) delete state.moodLog[today];
   save();
   renderMe();
+}
+
+// ---- Companion Chat (Sunny) ----
+const BOT_RULES = [
+  { keys: ['sad', 'lonely', 'down', 'depress', 'cry', 'tear'], replies: [
+    "I'm right here with you 💛 Take one slow breath — in for 4, out for 4.",
+    "It's okay to feel that way. Want me to call your emergency contact? You can also tap SOS anytime.",
+    "Sending you a big virtual hug 🫂. A glass of water and a 5-minute timer can sometimes shift the mood."
+  ]},
+  { keys: ['pain', 'hurt', 'fell', 'sick', 'bleed'], replies: [
+    "I want to make sure you're safe. Tap the red SOS button at the bottom right if you need help now.",
+    "Tell me where it hurts — I'll log it so you can share with your doctor later.",
+    "If it's urgent, please call 911 or your contact right away. I'm here either way."
+  ]},
+  { keys: ['happy', 'great', 'good', 'amazing', 'excited', 'love'], replies: [
+    "Love that! 🎉 You earned it.",
+    "Saving this as today's mood. Anything fun planned?",
+    "Wanna share it with the community? Tap the Community card."
+  ]},
+  { keys: ['tired', 'exhaust', 'sleep', 'rest'], replies: [
+    "Rest is real medicine. Want me to start a 20-min power-nap timer?",
+    "How's your sleep been lately? We can log this so your doctor sees the pattern."
+  ]},
+  { keys: ['water', 'thirst', 'drink', 'hydrate'], replies: [
+    "Great call! Starting a 1-hour water reminder 💧",
+    "Hydration matters a lot for wheelchair users. I'll nudge you every hour."
+  ]},
+  { keys: ['med', 'pill', 'vitamin', 'heart med'], replies: [
+    "I'll send a loud reminder at the scheduled time. You can also see today's list on the Today page.",
+    "Your schedule: 8:00 AM heart med, 8:00 PM vitamin D. Anything to add or change?"
+  ]},
+  { keys: ['cath', 'catheter'], replies: [
+    "Catheter care is set for every 4 hours. I'll alert you with a long loud alarm.",
+    "Stay hydrated — that makes catheter care easier. Want a water reminder too?"
+  ]},
+  { keys: ['ride', 'uber', 'lyft', 'transport', 'doctor visit'], replies: [
+    "Open the Rides tab — I can show WAV options, GoGoGrandparent (call-only), and paratransit.",
+    "For doctor visits, paratransit is cheapest if you book 24h ahead. WAV is faster on demand."
+  ]},
+  { keys: ['help', 'sos', 'emergency', 'scared'], replies: [
+    "Tap the red SOS button at the bottom right. It can dial 911 instantly.",
+    "I'm here. Take a breath. Do you want me to open the SOS sheet?"
+  ]},
+  { keys: ['thank', 'thanks'], replies: [
+    "Anytime, friend 💛",
+    "That's what I'm here for. Talk soon.",
+    "😊 Stay well."
+  ]}
+];
+const BOT_FALLBACK = [
+  "Tell me more — I'm listening 💛",
+  "How does that make you feel?",
+  "I'm right here whenever you need me.",
+  "Got it. Anything else on your mind?"
+];
+function botReply(text) {
+  const t = (text || '').toLowerCase();
+  for (const g of BOT_RULES) {
+    if (g.keys.some(k => t.indexOf(k) >= 0)) {
+      return g.replies[Math.floor(Math.random() * g.replies.length)];
+    }
+  }
+  return BOT_FALLBACK[Math.floor(Math.random() * BOT_FALLBACK.length)];
+}
+
+function openCompanion() {
+  if (!state.companionChat || !state.companionChat.length) {
+    state.companionChat = [
+      { from: 'bot', text: "Hi! I'm Sunny, your care companion ☀️ How are you feeling today?", at: Date.now() }
+    ];
+    save();
+  }
+  renderCompanion();
+  openSheet('companionSheet');
+  setTimeout(() => {
+    const c = $('chatInput');
+    if (c) c.focus();
+    const m = $('chatScroll');
+    if (m) m.scrollTop = m.scrollHeight;
+  }, 360);
+}
+function renderCompanion() {
+  const box = $('chatLog');
+  box.innerHTML = '';
+  (state.companionChat || []).forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'bubble ' + (m.from === 'me' ? 'me' : 'bot');
+    div.innerHTML = `<div class="bubble-text">${esc(m.text)}</div><div class="bubble-time">${fmtUSAMPM(new Date(m.at))}</div>`;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function sendChat() {
+  const input = $('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  state.companionChat = state.companionChat || [];
+  state.companionChat.push({ from: 'me', text, at: Date.now() });
+  input.value = '';
+  renderCompanion();
+  save();
+  // Simulate bot reply
+  setTimeout(() => {
+    state.companionChat.push({ from: 'bot', text: botReply(text), at: Date.now() });
+    renderCompanion();
+    save();
+  }, 700);
+}
+
+// ---- Community ----
+function openCommunity() {
+  renderCommunity();
+  openSheet('communitySheet');
+}
+function renderCommunity() {
+  const list = $('commList');
+  list.innerHTML = '';
+  const posts = (state.communityPosts || []).slice().reverse();
+  if (!posts.length) {
+    list.innerHTML = '<div class="empty">No posts yet. Be the first to share!</div>';
+    return;
+  }
+  posts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'comm-card';
+    card.innerHTML = `
+      <div class="comm-head">
+        <span class="comm-avatar">${esc(p.avatar || '🌟')}</span>
+        <div class="comm-meta">
+          <div class="comm-name">${esc(p.name)}</div>
+          <div class="comm-time">${esc(p.time)}</div>
+        </div>
+      </div>
+      <div class="comm-text">${esc(p.text)}</div>
+      <div class="comm-actions">
+        <button class="comm-like ${p.liked ? 'liked' : ''}" data-like="${p.id}">
+          <span>${p.liked ? '❤️' : '🤍'}</span>
+          <span>${p.likes}</span>
+        </button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+function toggleLike(id) {
+  state.communityPosts = state.communityPosts || [];
+  const p = state.communityPosts.find(x => x.id === id);
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes += p.liked ? 1 : -1;
+  save();
+  renderCommunity();
+}
+function publishPost() {
+  const text = $('postInput').value.trim();
+  if (!text) return;
+  state.communityPosts = state.communityPosts || [];
+  state.communityPosts.push({
+    id: newId(),
+    avatar: '🌟',
+    name: 'You · ' + (TZ_OPTIONS.find(t => t.value === tz())?.label.split(' ')[0] || 'US'),
+    time: 'Just now',
+    text,
+    likes: 0,
+    liked: false,
+    own: true
+  });
+  $('postInput').value = '';
+  save();
+  renderCommunity();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
