@@ -317,9 +317,10 @@ function showAlert(icon, title, msg, snoozeable = true) {
     $('alertBackdrop').classList.add('show');
     $('iosAlert').classList.add('show');
   });
-  beep();
+  playLoudAlarm();
 }
 function hideAlert() {
+  stopLoudAlarm();
   $('alertBackdrop').classList.remove('show');
   $('iosAlert').classList.remove('show');
   setTimeout(() => {
@@ -331,30 +332,60 @@ function hideAlert() {
 
 // ---- Audio ----
 let audioCtx = null;
-function beep() {
+let alarmLoopId = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(ctx, freq, when, dur, vol) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, when);
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.exponentialRampToValueAtTime(vol, when + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(when);
+  osc.stop(when + dur + 0.05);
+}
+
+// Loud, long medication alarm — ~7-8 seconds of urgent pulsing tones
+// Repeats every ~9s until user taps "Got it" or "Snooze"
+function playLoudAlarm() {
+  stopLoudAlarm();
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtx;
-    const t0 = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, t0);
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.35, t0 + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t0); osc.stop(t0 + 0.5);
-    setTimeout(() => {
-      const o2 = ctx.createOscillator(), g2 = ctx.createGain();
-      o2.frequency.setValueAtTime(1100, ctx.currentTime);
-      g2.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g2.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.05);
-      g2.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-      o2.connect(g2).connect(ctx.destination);
-      o2.start(); o2.stop(ctx.currentTime + 0.6);
-    }, 700);
+    const ctx = ensureAudio();
+    const ON = 0.55, OFF = 0.35;          // each beep pair
+    const REPEATS = 8;                     // 8 * 0.9s ≈ 7.2s
+    const BASE = ctx.currentTime + 0.05;
+    for (let i = 0; i < REPEATS; i++) {
+      const t = BASE + i * (ON + OFF);
+      playTone(ctx, 880, t, 0.45, 0.95);                       // high
+      playTone(ctx, 1320, t + 0.22, 0.35, 0.95);                // higher accent
+    }
+    // Re-play every ~9s while alert is still showing
+    alarmLoopId = setTimeout(() => {
+      if (alertActive) playLoudAlarm();
+    }, (ON + OFF) * REPEATS * 1000 + 1500);
   } catch {}
+}
+
+function stopLoudAlarm() {
+  if (alarmLoopId !== null) {
+    clearTimeout(alarmLoopId);
+    alarmLoopId = null;
+  }
+  // Cut any sustained oscillators quickly by closing and recreating context
+  try {
+    if (audioCtx && audioCtx.state !== 'closed') {
+      audioCtx.close();
+    }
+  } catch {}
+  audioCtx = null;
 }
 
 // ---- Ring timer ----
