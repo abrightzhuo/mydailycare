@@ -15,7 +15,9 @@ const defaultState = {
   accessibility: null,
   destinations: [],
   trips: [],
-  rideFilter: 'all'
+  rideFilter: 'all',
+  emergencyContact: null,        // { name, phone, relationship }
+  moodLog: {}                    // { 'YYYY-MM-DD': '😊' }
 };
 
 const RIDE_PROVIDERS = [
@@ -722,6 +724,19 @@ function bind() {
       startTimer(5 * 60, 'Snooze');
     }, 400);
   });
+
+  // SOS
+  $('sosFab').addEventListener('click', openSOS);
+  $('sosCall911').addEventListener('click', call911);
+  $('sosCallContact').addEventListener('click', callContact);
+
+  // Emergency contact form
+  $('meContact').addEventListener('click', openContact);
+  $('contactForm').addEventListener('submit', saveContact);
+  $('contactClearBtn').addEventListener('click', clearContact);
+
+  // Mood
+  $$('.mood-btn').forEach(b => b.addEventListener('click', () => setMood(b.dataset.mood)));
 }
 
 // ---- Init ----
@@ -742,6 +757,105 @@ function renderMe() {
   $('meTripSub').textContent = (state.trips || []).length + ' recent';
   const p = state.accessibility;
   $('meProfSub').textContent = p ? 'Profile set ✓' : 'Not set up yet';
+
+  // Emergency contact summary
+  const c = state.emergencyContact;
+  $('meContactSub').textContent = c
+    ? `${c.name}${c.relationship ? ' · ' + c.relationship : ''} · ${c.phone}`
+    : 'Tap to add a person we can call for you';
+
+  // SOS contact button
+  if (c) {
+    $('sosCallContact').hidden = false;
+    $('sosContactName').textContent = c.name;
+    $('sosContactPhone').textContent = c.phone;
+  } else {
+    $('sosCallContact').hidden = true;
+  }
+
+  // Mood history (last 7 days)
+  const today = todayKey();
+  $$('.mood-btn').forEach(b => {
+    b.classList.toggle('active', state.moodLog[today] === b.dataset.mood);
+  });
+  const hist = $('moodHistory');
+  hist.innerHTML = '';
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const k = d.toISOString().slice(0, 10);
+    days.push({ k, m: state.moodLog[k] });
+  }
+  days.forEach(({ k, m }) => {
+    const cell = document.createElement('div');
+    cell.className = 'mood-day';
+    cell.title = k;
+    cell.innerHTML = `<span class="mood-day-emoji">${m || '·'}</span><span class="mood-day-label">${k.slice(5)}</span>`;
+    hist.appendChild(cell);
+  });
+}
+
+// ---- SOS ----
+function openSOS() {
+  // Pre-render the contact row visibility
+  const c = state.emergencyContact;
+  $('sosCallContact').hidden = !c;
+  if (c) {
+    $('sosContactName').textContent = c.name;
+    $('sosContactPhone').textContent = c.phone;
+  }
+  openSheet('sosSheet');
+}
+
+function call911() {
+  // iOS Safari will prompt and dial
+  window.location.href = 'tel:911';
+}
+
+function callContact() {
+  const c = state.emergencyContact;
+  if (!c || !c.phone) return;
+  // Strip non-dial characters; keep + and digits
+  const phone = c.phone.replace(/[^\d+]/g, '');
+  window.location.href = 'tel:' + phone;
+}
+
+// ---- Emergency contact form ----
+function openContact() {
+  const c = state.emergencyContact || {};
+  $('contactName').value = c.name || '';
+  $('contactPhone').value = c.phone || '';
+  $('contactRel').value = c.relationship || 'family';
+  $('contactClearBtn').style.display = c.name ? '' : 'none';
+  openSheet('contactSheet');
+}
+function saveContact(e) {
+  e.preventDefault();
+  const name = $('contactName').value.trim();
+  const phone = $('contactPhone').value.trim();
+  if (!name || !phone) return;
+  state.emergencyContact = { name, phone, relationship: $('contactRel').value };
+  save();
+  closeSheet('contactSheet');
+  renderMe();
+}
+function clearContact() {
+  state.emergencyContact = null;
+  save();
+  closeSheet('contactSheet');
+  renderMe();
+}
+
+// ---- Mood ----
+const MOOD_EMOJI = ['😄', '🙂', '😐', '😔', '😣'];
+function setMood(emoji) {
+  state.moodLog = state.moodLog || {};
+  const today = todayKey();
+  state.moodLog[today] = state.moodLog[today] === emoji ? '' : emoji;
+  if (!state.moodLog[today]) delete state.moodLog[today];
+  save();
+  renderMe();
 }
 
 document.addEventListener('DOMContentLoaded', function() {

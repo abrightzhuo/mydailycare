@@ -654,3 +654,122 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ============ SOS Floating Button ============ */
+.sos-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 90;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #FFF;
+  background: linear-gradient(135deg, #FF453A 0%, #D70015 100%);
+  color: #FFF;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(215, 0, 21, .45), 0 0 0 2px rgba(255, 69, 58, .25);
+  animation: sosPulse 2.4s ease-in-out infinite;
+}
+.sos-fab:active { transform: scale(.92); }
+.sos-fab:focus-visible { outline: 3px solid #FFD60A; outline-offset: 3px; }
+@keyframes sosPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(215, 0, 21, .45), 0 0 0 0 rgba(255, 69, 58, .55); }
+  50%      { box-shadow: 0 8px 24px rgba(215, 0, 21, .45), 0 0 0 10px rgba(255, 69, 58, 0); }
+}
+@media (prefers-color-scheme: dark) {
+  .sos-fab { border-color: #1C1C1E; }
+}
+@media (min-width: 768px) {
+  .sos-fab { right: calc(50% - 215px + 16px); }
+}
+
+/* ============ SOS Sheet ============ */
+.sos-sheet { text-align: center; }
+.sos-head { margin: 4px 0 16px; }
+.sos-bell { font-size: 44px; display: block; margin-bottom: 4px; }
+.sos-sub { font-size: 13px; color: var(--label-2); margin-top: 2px; }
+.sos-call {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: none;
+  border-radius: 16px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  margin-top: 10px;
+  color: #FFF;
+  transition: transform .12s;
+}
+.sos-call:active { transform: scale(.97); }
+.sos-call-icon {
+  font-size: 28px;
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .2);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.sos-call-text { flex: 1; }
+.sos-call-text strong { display: block; font-size: 18px; font-weight: 800; }
+.sos-call-text small { display: block; font-size: 12px; opacity: .9; margin-top: 2px; }
+.sos-911 { background: linear-gradient(135deg, #FF453A 0%, #D70015 100%); box-shadow: 0 6px 18px rgba(215, 0, 21, .35); }
+.sos-contact { background: linear-gradient(135deg, #5E5CE6 0%, #3634A3 100%); box-shadow: 0 6px 18px rgba(94, 92, 230, .35); }
+
+/* ============ Mood Picker ============ */
+.mood-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 14px;
+}
+.mood-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.mood-btn {
+  border: 2px solid transparent;
+  background: var(--fill);
+  border-radius: 14px;
+  padding: 8px 0;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .15s, border-color .2s, background .2s;
+}
+.mood-btn:active { transform: scale(.92); }
+.mood-btn.active {
+  background: var(--gold-soft, rgba(240, 194, 75, .25));
+  border-color: var(--gold-bright, #F0C24B);
+  transform: scale(1.08);
+}
+.mood-history {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  border-top: .5px solid var(--sep);
+  padding-top: 10px;
+}
+.mood-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-radius: 8px;
+  background: var(--fill);
+  font-size: 9px;
+  color: var(--label-2);
+  font-weight: 600;
+}
+.mood-day-emoji { font-size: 18px; line-height: 1; }
+.mood-day-label { letter-spacing: .3px; }

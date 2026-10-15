@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="MyDailyCare" />
 <meta name="theme-color" content="#F2F2F7" />
 <title>MyDailyCare — iPhone Edition</title>
-<link rel="stylesheet" href="ios.css?v=5" />
+<link rel="stylesheet" href="ios.css?v=6" />
 </head>
 <body>
 
@@ -133,8 +133,28 @@
         <span class="avatar-sub">MyDailyCare · iPhone Edition</span>
       </div>
 
-      <div class="section-header">Health</div>
+      <div class="section-header">How are you today?</div>
+      <div class="mood-card" id="moodCard">
+        <div class="mood-row" id="moodRow">
+          <button class="mood-btn" data-mood="😄">😄</button>
+          <button class="mood-btn" data-mood="🙂">🙂</button>
+          <button class="mood-btn" data-mood="😐">😐</button>
+          <button class="mood-btn" data-mood="😔">😔</button>
+          <button class="mood-btn" data-mood="😣">😣</button>
+        </div>
+        <div class="mood-history" id="moodHistory"></div>
+      </div>
+
+      <div class="section-header">Safety</div>
       <div class="card list">
+        <button class="cell" id="meContact">
+          <span class="cell-icon">🆘</span>
+          <div class="cell-main">
+            <span class="cell-title">Emergency Contact</span>
+            <span class="cell-sub" id="meContactSub">Tap to add a person we can call for you</span>
+          </div>
+          <span class="cell-chevron">›</span>
+        </button>
         <button class="cell" id="meProfile">
           <span class="cell-icon">♿</span>
           <div class="cell-main">
@@ -214,6 +234,9 @@
       <span class="tab-icon">👤</span><span class="tab-label">Me</span>
     </button>
   </nav>
+
+  <!-- ============ SOS FLOATING BUTTON ============ -->
+  <button class="sos-fab" id="sosFab" aria-label="Emergency SOS">SOS</button>
 </div>
 
 <!-- ============ TIMER SHEET ============ -->
@@ -369,6 +392,65 @@
   </form>
 </div>
 
+<!-- ============ SOS SHEET ============ -->
+<div class="sheet-backdrop" id="sosBackdrop" hidden></div>
+<div class="sheet sos-sheet" id="sosSheet" hidden>
+  <div class="sheet-grab"></div>
+  <div class="sos-head">
+    <span class="sos-bell">🚨</span>
+    <h3 class="sheet-title" style="color:#FF3B30;margin-bottom:0;">Emergency</h3>
+    <p class="sos-sub">Tap to call 911 or your emergency contact.</p>
+  </div>
+  <button class="sos-call sos-911" id="sosCall911">
+    <span class="sos-call-icon">📞</span>
+    <span class="sos-call-text">
+      <strong>Call 911</strong>
+      <small>Police · Fire · Ambulance</small>
+    </span>
+  </button>
+  <button class="sos-call sos-contact" id="sosCallContact" hidden>
+    <span class="sos-call-icon">👤</span>
+    <span class="sos-call-text">
+      <strong id="sosContactName">Contact</strong>
+      <small id="sosContactPhone">—</small>
+    </span>
+  </button>
+  <button class="btn tinted wide" data-close="sosSheet" style="margin-top:14px;">Cancel</button>
+</div>
+
+<!-- ============ EMERGENCY CONTACT SHEET ============ -->
+<div class="sheet-backdrop" id="contactBackdrop" hidden></div>
+<div class="sheet" id="contactSheet" hidden>
+  <div class="sheet-grab"></div>
+  <h3 class="sheet-title">Emergency Contact</h3>
+  <p class="hint" style="margin-top:-4px;">A person we can call quickly when you need help.</p>
+  <form id="contactForm">
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="contactName" placeholder="e.g. Maria (sister)" />
+    </div>
+    <div class="field">
+      <label>Phone</label>
+      <input type="tel" id="contactPhone" placeholder="+1 555 123 4567" />
+    </div>
+    <div class="field">
+      <label>Relationship</label>
+      <select id="contactRel">
+        <option value="family">Family</option>
+        <option value="caregiver">Caregiver</option>
+        <option value="friend">Friend</option>
+        <option value="neighbor">Neighbor</option>
+        <option value="doctor">Doctor</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn tinted" id="contactClearBtn">Remove</button>
+      <button type="submit" class="btn filled">Save</button>
+    </div>
+  </form>
+</div>
+
 <!-- ============ iOS ALERT ============ -->
 <div class="alert-backdrop" id="alertBackdrop" hidden></div>
 <div class="ios-alert" id="iosAlert" role="alertdialog" hidden>
@@ -390,6 +472,6 @@ window.addEventListener('error', function(e) {
   document.body.appendChild(d);
 });
 </script>
-<script src="ios.js?v=6"></script>
+<script src="ios.js?v=7"></script>
 </body>
 </html>
